@@ -59,13 +59,12 @@ class Table extends React.Component {
             }
             if (this.state.cpu == true) {
                 this.cpuTurn();
-                console.log("t")
             }
         }
     } 
     cpuTurn(){
         var tempgridRep = this.state.gridRep;
-        var i = 0;
+        var i = this.chooseBox();
             while(tempgridRep[i] == "X" || tempgridRep[i] == "O"){
                 i++;
             }
@@ -73,7 +72,20 @@ class Table extends React.Component {
             tempgridRep[i] = "O";
             this.setState({gridRep: tempgridRep});
             this.goCheck();
-            this.setState({turn:"X"})
+            this.setState({turn:"X"});
+    }
+    CPUChooseBox(){
+        var tempgridRep = this.state.gridRep;
+        var state0 = this.state.gridRep;
+        var state1 = [];
+        for (var i = 0; i < 9; i++){
+            if (tempgridRep[i] != "X" && tempgridRep[i] != "O"){
+                var possibleMove = tempgridRep;
+                possibleMove[i] = "O";
+                state1.push(possibleMove);
+            }
+        }
+        //TODO: Create states for turns 2 and 3 ahead
     }
     render() {
         return( 
