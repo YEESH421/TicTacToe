@@ -64,7 +64,9 @@ class Table extends React.Component {
     } 
     cpuTurn(){
         var tempgridRep = this.state.gridRep;
-        var i = this.chooseBox();
+        var i = 0;
+        this.CPUChooseBox();
+        /*
             while(tempgridRep[i] == "X" || tempgridRep[i] == "O"){
                 i++;
             }
@@ -73,19 +75,46 @@ class Table extends React.Component {
             this.setState({gridRep: tempgridRep});
             this.goCheck();
             this.setState({turn:"X"});
+        */
     }
     CPUChooseBox(){
         var tempgridRep = this.state.gridRep;
-        var state0 = this.state.gridRep;
         var state1 = [];
         for (var i = 0; i < 9; i++){
             if (tempgridRep[i] != "X" && tempgridRep[i] != "O"){
-                var possibleMove = tempgridRep;
+                var possibleMove = tempgridRep.slice(0);
                 possibleMove[i] = "O";
-                state1.push(possibleMove);
+                state1[i] = possibleMove;
             }
         }
-        //TODO: Create states for turns 2 and 3 ahead
+        var x;
+        var y;
+        var state2 = []
+        for (x = 0; x < state1.length; x++){
+            for (var y = 0; y < 9; y++){
+                if (state1[x] != undefined){
+                    if (state1[x][y] != "X" && state1[x][y] != "O"){
+                        var possibleMove = state1[x].slice(0);
+                        possibleMove[y] = "X";
+                        state2.push(possibleMove);
+                    }
+                }
+            }
+        }
+        var state3 = [];
+        for (x = 0; x < state2.length; x++){
+            for (var y = 0; y < 9; y++){
+                if (state2[x] != undefined){
+                    if (state2[x][y] != "X" && state2[x][y] != "O"){
+                        var possibleMove = state2[x].slice(0);
+                        possibleMove[y] = "O";
+                        state3.push(possibleMove);
+                    }
+                }
+            }
+        }
+
+        //TODO: evaluate states to decide best course of decision
     }
     render() {
         return( 
