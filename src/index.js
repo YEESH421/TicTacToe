@@ -30,7 +30,6 @@ class Table extends React.Component {
             this.setState({gridRep: [0,1,2,3,4,5,6,7,8]});
             this.setState({cpu: false});
             this.setState({turn: "X"});
-            console.log("win");
         }
 
     }
@@ -52,10 +51,8 @@ class Table extends React.Component {
             this.goCheck();
             if (this.state.turn == "X") {
                 this.setState({turn:"O"});
-                console.log(this.state.turn);
             }else{
-                this.setState({turn:"X"})
-                console.log(this.state.turn);
+                this.setState({turn:"X"});
             }
             if (this.state.cpu == true) {
                 this.cpuTurn();
@@ -65,7 +62,7 @@ class Table extends React.Component {
     cpuTurn(){
         var tempgridRep = this.state.gridRep;
         var i = 0;
-        this.CPUChooseBox();
+        console.log(this.CPUChooseBox());
         /*
             while(tempgridRep[i] == "X" || tempgridRep[i] == "O"){
                 i++;
@@ -77,43 +74,106 @@ class Table extends React.Component {
             this.setState({turn:"X"});
         */
     }
+    evaluateState(state){
+        for (var i = 0; i < state.length; i++){
+            //TODO: rate each game state and update the rating
+        }
+    }
     CPUChooseBox(){
         var tempgridRep = this.state.gridRep;
-        var state1 = [];
+        var state1 = []; //state1 is all possible game states after 1 turn
+        var max = 0;
         for (var i = 0; i < 9; i++){
             if (tempgridRep[i] != "X" && tempgridRep[i] != "O"){
                 var possibleMove = tempgridRep.slice(0);
                 possibleMove[i] = "O";
-                state1[i] = possibleMove;
+                state1.push([possibleMove, 0, 0]); //each possible game state, its ancestor, and  the game state's rating for circles
             }
         }
         var x;
         var y;
-        var state2 = []
+        var state2 = [];
+        var min = 10;
         for (x = 0; x < state1.length; x++){
             for (var y = 0; y < 9; y++){
-                if (state1[x] != undefined){
-                    if (state1[x][y] != "X" && state1[x][y] != "O"){
-                        var possibleMove = state1[x].slice(0);
+                if (state1[x][0] != undefined){
+                    if (state1[x][0][y] != "X" && state1[x][0][y] != "O"){
+                        var possibleMove = state1[x][0].slice(0);
                         possibleMove[y] = "X";
-                        state2.push(possibleMove);
+                        state2.push([possibleMove, x, 0]);
                     }
                 }
             }
         }
         var state3 = [];
+        max = 0;
         for (x = 0; x < state2.length; x++){
             for (var y = 0; y < 9; y++){
-                if (state2[x] != undefined){
-                    if (state2[x][y] != "X" && state2[x][y] != "O"){
-                        var possibleMove = state2[x].slice(0);
+                if (state2[x][0] != undefined){
+                    if (state2[x][0][y] != "X" && state2[x][0][y] != "O"){
+                        var possibleMove = state2[x][0].slice(0);
                         possibleMove[y] = "O";
-                        state3.push(possibleMove);
+                        state3.push([possibleMove, x, 0]);
                     }
                 }
             }
         }
+        y = 0;
+        for(x = 0; x<state2.length; x++){
+            if(x == state2.length-1){
+                while(y < state3.length){
+                    if (max < state3[y][2]) {
+                        max = state3[y][2];
+                        state2[y][2] = max;
+                    }
+                    y++;
+                }
+                max= 0;
+            } else{
+            while(state3[y][1] == x && y < state3.length){
+                if (max < state3[y][2]) {
+                    max = state3[y][2];
+                    state2[y][2] = max;
+                }
+                y++;
+            }
+            max= 0;
+            }
 
+        }
+        y = 0;
+        for(x=0; x<state1.length; x++) {
+            if(x == state1.length-1){
+                while(y < state2.length) {
+                    if (min < state2[y][2]) {
+                        min = state2[y][2];
+                        state1[y][2] = min;
+                    }
+                    y++;
+                }
+                min= 10;
+            } else {
+            while(state2[y][1] == x) {
+                if (min < state2[y][2]) {
+                    min = state2[y][2];
+                    state1[y][2] = min;
+                }
+                y++;
+            }
+            min= 10;
+        }   
+            }
+        y = 0;
+        var desiredState;
+        max = -1;
+        for(x = 0; x<state1.length; x++){
+            if (state1[x][2] > max) {
+                max = state1[x][2];
+                desiredState = state1[x][0];
+                console.log(desiredState);
+            }
+        }
+        return desiredState;
         //TODO: evaluate states to decide best course of decision
     }
     render() {
