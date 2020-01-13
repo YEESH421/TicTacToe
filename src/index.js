@@ -61,8 +61,17 @@ class Table extends React.Component {
     } 
     cpuTurn(){
         var tempgridRep = this.state.gridRep;
+        var newGrid = this.CPUChooseBox()
         var i = 0;
-        console.log(this.CPUChooseBox());
+        this.setState({gridRep: newGrid});
+        for(var x = 0; x < tempgridRep.length; x++){
+            if(tempgridRep[x] != newGrid[x]){
+                i = x;
+            }
+        }
+        document.getElementsByName("squares")[i].value = "O";
+        this.goCheck();
+        this.setState({turn: "X"});
         /*
             while(tempgridRep[i] == "X" || tempgridRep[i] == "O"){
                 i++;
@@ -74,9 +83,59 @@ class Table extends React.Component {
             this.setState({turn:"X"});
         */
     }
+    evaluationHelper(segment){
+        var points = 0;
+        var xCount = 0;
+        var oCount = 0;
+        segment.forEach(function (x) { 
+            if(x == "X"){
+                xCount += 1;
+            }else if(x == "O"){
+                oCount += 1;
+            }
+        });
+        if (oCount == 1 && xCount == 0){
+            points += 1;
+        }else if(oCount == 2 && xCount == 0) {
+            points += 3
+        }else if(oCount == 3){
+            points += 19
+        }
+        if (xCount == 2 && oCount == 0){
+            points -= 10;
+        }else if(xCount == 2 && oCount == 1){
+            points += 4;
+        }else if(xCount == 3){
+            points -= 20;
+        }
+        return points
+    }
     evaluateState(state){
+        var points = 0;
+        var horizontalSegment;
+        var verticalSegment;
+        var diagonalSegment;
         for (var i = 0; i < state.length; i++){
-            //TODO: rate each game state and update the rating
+            for(var j = 0 ;j<3; j++) {
+                horizontalSegment = state[i][0].slice(j*3, (j*3)+ 3);
+                points += this.evaluationHelper(horizontalSegment);
+            }
+            for(j=0; j<3; j++){
+                verticalSegment = [];
+                verticalSegment.push(state[i][0][j]);
+                verticalSegment.push(state[i][0][j+3]);
+                verticalSegment.push(state[i][0][j+6]);
+                points += this.evaluationHelper(verticalSegment);
+            }
+            for(j = 0; j<2; j++){
+                diagonalSegment = [];
+                diagonalSegment.push(state[i][0][j*2]);
+                diagonalSegment.push(state[i][0][4]);
+                diagonalSegment.push(state[i][0][8-j*2]);
+                points += this.evaluationHelper(diagonalSegment);
+            }
+            state[i][2] = points;
+            points = 0;
         }
     }
     CPUChooseBox(){
@@ -118,22 +177,23 @@ class Table extends React.Component {
                 }
             }
         }
+        this.evaluateState(state3);
         y = 0;
         for(x = 0; x<state2.length; x++){
             if(x == state2.length-1){
                 while(y < state3.length){
                     if (max < state3[y][2]) {
                         max = state3[y][2];
-                        state2[y][2] = max;
+                        state2[x][2] = max;
                     }
                     y++;
                 }
                 max= 0;
             } else{
-            while(state3[y][1] == x && y < state3.length){
+            while(state3[y][1] == x){
                 if (max < state3[y][2]) {
                     max = state3[y][2];
-                    state2[y][2] = max;
+                    state2[x][2] = max;
                 }
                 y++;
             }
@@ -147,7 +207,7 @@ class Table extends React.Component {
                 while(y < state2.length) {
                     if (min < state2[y][2]) {
                         min = state2[y][2];
-                        state1[y][2] = min;
+                        state1[x][2] = min;
                     }
                     y++;
                 }
@@ -156,7 +216,7 @@ class Table extends React.Component {
             while(state2[y][1] == x) {
                 if (min < state2[y][2]) {
                     min = state2[y][2];
-                    state1[y][2] = min;
+                    state1[x][2] = min;
                 }
                 y++;
             }
@@ -174,7 +234,6 @@ class Table extends React.Component {
             }
         }
         return desiredState;
-        //TODO: evaluate states to decide best course of decision
     }
     render() {
         return( 
