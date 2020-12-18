@@ -3,269 +3,269 @@ import ReactDOM from 'react-dom';
 import './index.css';
 import * as serviceWorker from './serviceWorker';
 
-class Table extends React.Component {
-    constructor(){
-        super();
-        this.state = {
-            turn: "X",
-            gridRep: [0,1,2,3,4,5,6,7,8],
-            cpu: false
-        }
-    }
-    goCheck(){
-        var y3 = this.state.gridRep[0] == this.state.gridRep[1] && this.state.gridRep[1] == this.state.gridRep[2];
-        var y2 = this.state.gridRep[3] == this.state.gridRep[4] && this.state.gridRep[4] == this.state.gridRep[5];
-        var y1 = this.state.gridRep[6] == this.state.gridRep[7] && this.state.gridRep[7] == this.state.gridRep[8];
-        var x3 = this.state.gridRep[0] == this.state.gridRep[3] && this.state.gridRep[3] == this.state.gridRep[6];
-        var x2 = this.state.gridRep[1] == this.state.gridRep[4] && this.state.gridRep[4] == this.state.gridRep[7];
-        var x1 = this.state.gridRep[2] == this.state.gridRep[5] && this.state.gridRep[5] == this.state.gridRep[8];
-        var leftdiagonal = this.state.gridRep[2] == this.state.gridRep[4] && this.state.gridRep[4] == this.state.gridRep[6];
-        var rightdiagonal = this.state.gridRep[0] == this.state.gridRep[4] && this.state.gridRep[4] == this.state.gridRep[8];
-        if (y3||y2||y1||x3||x2||x1||leftdiagonal||rightdiagonal) {
-            alert(this.state.turn + " Wins!");
-            var i = 0;
-            for(i= 0; i < document.getElementsByName("squares").length; i++){
-                document.getElementsByName("squares")[i].value = "";
-            }
-            this.setState({gridRep: [0,1,2,3,4,5,6,7,8]});
-            this.setState({cpu: false});
-            this.setState({turn: "X"});
-        }
-
-    }
-    startWtihCPU = () => {
-        var i = 0;
-        for(i= 0; i < document.getElementsByName("squares").length; i++){
-            document.getElementsByName("squares")[i].value = "";
-        }
-        this.setState({gridRep: [0,1,2,3,4,5,6,7,8]});
-        this.setState({cpu: true});
-        this.setState({turn: "X"});
-    }
-    selectBox(gridNum){
-        var tempgridRep = this.state.gridRep;
-        if(tempgridRep[gridNum] != "X" && tempgridRep[gridNum] != "O"){
-            document.getElementsByName("squares")[gridNum].value = this.state.turn;
-            tempgridRep[gridNum] = this.state.turn;
-            this.setState({gridRep: tempgridRep});
-            this.goCheck();
-            if (this.state.turn == "X") {
-                this.setState({turn:"O"});
-            }else{
-                this.setState({turn:"X"});
-            }
-            if (this.state.cpu == true) {
-                this.cpuTurn();
-            }
-        }
-    } 
-    cpuTurn(){
-        var tempgridRep = this.state.gridRep;
-        var newGrid = this.CPUChooseBox()
-        var i = 0;
-        this.setState({gridRep: newGrid});
-        for(var x = 0; x < tempgridRep.length; x++){
-            if(tempgridRep[x] != newGrid[x]){
-                i = x;
-            }
-        }
-        document.getElementsByName("squares")[i].value = "O";
-        this.goCheck();
-        this.setState({turn: "X"});
-        /*
-            while(tempgridRep[i] == "X" || tempgridRep[i] == "O"){
-                i++;
-            }
-            document.getElementsByName("squares")[i].value = "O";
-            tempgridRep[i] = "O";
-            this.setState({gridRep: tempgridRep});
-            this.goCheck();
-            this.setState({turn:"X"});
-        */
-    }
-    evaluationHelper(segment){
-        var points = 0;
-        var xCount = 0;
-        var oCount = 0;
-        segment.forEach(function (x) { 
-            if(x == "X"){
-                xCount += 1;
-            }else if(x == "O"){
-                oCount += 1;
-            }
-        });
-        if (oCount == 1 && xCount == 0){
-            points += 1;
-        }else if(oCount == 2 && xCount == 0) {
-            points += 3
-        }else if(oCount == 3){
-            points += 19
-        }
-        if (xCount == 2 && oCount == 0){
-            points -= 10;
-        }else if(xCount == 2 && oCount == 1){
-            points += 4;
-        }else if(xCount == 3){
-            points -= 20;
-        }
-        return points
-    }
-    evaluateState(state){
-        var points = 0;
-        var horizontalSegment;
-        var verticalSegment;
-        var diagonalSegment;
-        for (var i = 0; i < state.length; i++){
-            for(var j = 0 ;j<3; j++) {
-                horizontalSegment = state[i][0].slice(j*3, (j*3)+ 3);
-                points += this.evaluationHelper(horizontalSegment);
-            }
-            for(j=0; j<3; j++){
-                verticalSegment = [];
-                verticalSegment.push(state[i][0][j]);
-                verticalSegment.push(state[i][0][j+3]);
-                verticalSegment.push(state[i][0][j+6]);
-                points += this.evaluationHelper(verticalSegment);
-            }
-            for(j = 0; j<2; j++){
-                diagonalSegment = [];
-                diagonalSegment.push(state[i][0][j*2]);
-                diagonalSegment.push(state[i][0][4]);
-                diagonalSegment.push(state[i][0][8-j*2]);
-                points += this.evaluationHelper(diagonalSegment);
-            }
-            state[i][2] = points;
-            points = 0;
-        }
-    }
-    CPUChooseBox(){
-        var tempgridRep = this.state.gridRep;
-        var state1 = []; //state1 is all possible game states after 1 turn
-        var max = 0;
-        for (var i = 0; i < 9; i++){
-            if (tempgridRep[i] != "X" && tempgridRep[i] != "O"){
-                var possibleMove = tempgridRep.slice(0);
-                possibleMove[i] = "O";
-                state1.push([possibleMove, 0, 0]); //each possible game state, its ancestor, and  the game state's rating for circles
-            }
-        }
-        var x;
-        var y;
-        var state2 = [];
-        var min = 10;
-        for (x = 0; x < state1.length; x++){
-            for (var y = 0; y < 9; y++){
-                if (state1[x][0] != undefined){
-                    if (state1[x][0][y] != "X" && state1[x][0][y] != "O"){
-                        var possibleMove = state1[x][0].slice(0);
-                        possibleMove[y] = "X";
-                        state2.push([possibleMove, x, 0]);
-                    }
-                }
-            }
-        }
-        var state3 = [];
-        max = 0;
-        for (x = 0; x < state2.length; x++){
-            for (var y = 0; y < 9; y++){
-                if (state2[x][0] != undefined){
-                    if (state2[x][0][y] != "X" && state2[x][0][y] != "O"){
-                        var possibleMove = state2[x][0].slice(0);
-                        possibleMove[y] = "O";
-                        state3.push([possibleMove, x, 0]);
-                    }
-                }
-            }
-        }
-        this.evaluateState(state3);
-        y = 0;
-        for(x = 0; x<state2.length; x++){
-            if(x == state2.length-1){
-                while(y < state3.length){
-                    if (max < state3[y][2]) {
-                        max = state3[y][2];
-                        state2[x][2] = max;
-                    }
-                    y++;
-                }
-                max= 0;
-            } else{
-            while(state3[y][1] == x){
-                if (max < state3[y][2]) {
-                    max = state3[y][2];
-                    state2[x][2] = max;
-                }
-                y++;
-            }
-            max= 0;
-            }
-
-        }
-        y = 0;
-        for(x=0; x<state1.length; x++) {
-            if(x == state1.length-1){
-                while(y < state2.length) {
-                    if (min < state2[y][2]) {
-                        min = state2[y][2];
-                        state1[x][2] = min;
-                    }
-                    y++;
-                }
-                min= 10;
-            } else {
-            while(state2[y][1] == x) {
-                if (min < state2[y][2]) {
-                    min = state2[y][2];
-                    state1[x][2] = min;
-                }
-                y++;
-            }
-            min= 10;
-        }   
-            }
-        y = 0;
-        var desiredState;
-        max = -1;
-        for(x = 0; x<state1.length; x++){
-            if (state1[x][2] > max) {
-                max = state1[x][2];
-                desiredState = state1[x][0];
-                console.log(desiredState);
-            }
-        }
-        return desiredState;
-    }
-    render() {
-        return( 
-            <>
-            <h1>TicTacToe</h1>
-            <table id = "table">
-                <tbody>
-                <tr>
-                    <td><input type = "button" name = "squares" type = "button"  onClick = {this.selectBox.bind(this, 0)}></input></td>
-                    <td><input type = "button" name = "squares" type = "button" onClick = {this.selectBox.bind(this, 1)}></input></td>
-                    <td><input type = "button" name = "squares" type = "button" onClick = {this.selectBox.bind(this, 2)}></input></td>
-                </tr>
-                <tr>
-                    <td><input type = "button" name = "squares" type = "button" onClick = {this.selectBox.bind(this, 3)}></input></td>
-                    <td><input type = "button" name = "squares" type = "button" onClick = {this.selectBox.bind(this, 4)}></input></td>
-                    <td><input type = "button" name = "squares" type = "button" onClick = {this.selectBox.bind(this, 5)}></input></td>
-                </tr>
-                <tr>
-                    <td><input type = "button" name = "squares" type = "button" onClick = {this.selectBox.bind(this, 6)}></input></td>
-                    <td><input type = "button" name = "squares" type = "button" onClick = {this.selectBox.bind(this, 7)}></input></td>
-                    <td><input type = "button" name = "squares" type = "button" onClick = {this.selectBox.bind(this, 8)}></input></td>
-                </tr>
-                </tbody>
-            </table>
-            <input type = "button" id = "cpu" value = "Start new game with CPU player (It will play as circles)" onClick = {this.startWtihCPU}></input>
-            </>
-        );
-    }
+function Square(props) {
+  return (
+    <button className="square" onClick={props.onClick}>
+      {props.value}
+    </button>
+  );
 }
-ReactDOM.render(<Table />, document.getElementById('root'));
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: https://bit.ly/CRA-PWA
-serviceWorker.unregister();
+class Board extends React.Component {
+  renderSquare(i) {
+    return (
+      <Square
+        value={this.props.squares[i]}
+        onClick={() => this.props.onClick(i)}
+      />
+    );
+  }
+
+  render() {
+    return (
+      <div>
+        <div className="board-row">
+          {this.renderSquare(0)}
+          {this.renderSquare(1)}
+          {this.renderSquare(2)}
+        </div>
+        <div className="board-row">
+          {this.renderSquare(3)}
+          {this.renderSquare(4)}
+          {this.renderSquare(5)}
+        </div>
+        <div className="board-row">
+          {this.renderSquare(6)}
+          {this.renderSquare(7)}
+          {this.renderSquare(8)}
+        </div>
+      </div>
+    );
+  }
+}
+
+class Game extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      history: [
+        {
+          squares: Array(9).fill(null)
+        }
+      ],
+      stepNumber: 0,
+      xIsNext: true
+    };
+  }
+  /** CPU functions */
+
+  /**
+   * determines cpu's next move
+   * @param squares current grid state
+   */
+  cpuMove(squares) {
+    var result = squares;
+    let pMvs = this.possibleMoves(squares, false);
+    let max = -100000;
+    let index = 0;
+    for (var i = 0; i < pMvs.length; i++) {
+      let rating = this.rateState(pMvs[i], true);
+      if (rating > max) {
+        max = rating;
+        index = i;
+      }
+    }
+    var countX = 0;
+    var countO = 0;
+    for (var i = 0; i<9; i++){
+      if (squares[i] == "X"){
+        countX += 1;
+      }
+      if (squares[i] == "O"){
+        countO +=1;
+      }
+    }
+    var topLeft = false;
+    var topRight = false;
+    var bottomLeft = false;
+    var bottomRight = false;
+    if (squares[0] == "X") {
+      topLeft = true;
+    } 
+    if (squares[2] == "X"){
+      topRight = true;
+    }
+    if (squares[6] == "X"){
+      bottomLeft = true;
+    }
+    if (squares[8] == "X"){
+      bottomRight = true;
+    }
+    if (topLeft && bottomRight && countX == 2){
+      result[1] = "O";
+    }else if (topRight && bottomLeft && countX == 2){
+      result[1] = "O";
+    }else{
+      result = pMvs[index];
+    }
+    return result;
+  }
+  /**
+   * rates how good state is for O
+   * @param {*} state gamestate to be rated
+   */
+  rateState(state, xturn) {
+    if (calculateWinner(state) == 'O') { //win awards points
+      return 10;
+    } else if (calculateWinner(state) == 'X') { //lose awards negative points
+      return -100;
+    } else if (calculateWinner(state) == null && !this.gridFull(state)) { //if nobody wins, create new array of possible states following current state
+      let nextMoves = this.possibleMoves(state, xturn);
+      let rating = 0
+      for (var i = 0; i < nextMoves.length; i++) {
+        rating += this.rateState(nextMoves[i], !xturn)/10.0
+      }
+      return rating;
+    }
+    else {
+      return 0;
+    }
+  }
+  gridFull(state) {
+    let full = true;
+    for (var i = 0; i < 9; i++) {
+      if (state[i] == "" || state[i] == null) {
+        full = false;
+      }
+    }
+    return full;
+  }
+  possibleMoves(squares, xturn) {
+    let states = new Array();
+    for (var i = 0; i < 9; i++) { //iterating thru all possible grid positions
+      if (squares[i] == "" || squares[i] == null) { //create possible grid of newstate where possible
+        let temp = squares.slice();
+        if (xturn) {
+          temp[i] = 'X';
+        } else {
+          temp[i] = 'O';
+        }
+        states.push(temp);
+      }
+    }
+    return states;
+  }
+
+/** Game Functions */
+
+  handleClick(i) {
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
+    const current = history[history.length - 1];
+    var squares = current.squares.slice();
+    if (this.state.xIsNext) {
+      squares[i] = 'X';
+    } else {
+      squares[i] = 'O';
+    }
+    this.setState(
+    {
+      history: history.concat([
+        {
+          squares: squares
+        }
+      ]),
+      stepNumber: history.length,
+      xIsNext: !this.state.xIsNext,
+    },
+    () => {
+      const history = this.state.history.slice(0, this.state.stepNumber + 1);
+      const current = history[history.length - 1];
+      var squares = current.squares.slice();
+      squares = this.cpuMove(squares);
+      this.setState(
+        {
+          history: history.concat([
+            {
+              squares: squares
+            }
+          ]),
+          stepNumber: history.length,
+          xIsNext: !this.state.xIsNext,
+        })
+    })
+  }
+
+  jumpTo(step) {
+    this.setState({
+      stepNumber: step,
+      xIsNext: (step % 2) === 0
+    });
+  }
+
+  render() {
+    const history = this.state.history;
+    const current = history[this.state.stepNumber];
+    console.log(current.squares)
+    const winner = calculateWinner(current.squares);
+
+    const moves = history.map((step, move) => {
+      const desc = move ?
+        'Go to move #' + move :
+        'Go to game start';
+      return (
+        <li key={move}>
+          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+        </li>
+      );
+    });
+
+    let status;
+    if (winner) {
+      status = "Winner: " + winner;
+    } else {
+      status = "Next player: " + (this.state.xIsNext ? "X" : "O");
+    }
+
+    return (
+      <div className="game">
+        <div className="game-board">
+          <Board
+            squares={current.squares}
+            onClick={i => this.handleClick(i)}
+          />
+        </div>
+        <div className="game-info">
+          <div>{status}</div>
+          <ol>{moves}</ol>
+        </div>
+      </div>
+    );
+  }
+}
+
+// ========================================
+
+ReactDOM.render(<Game />, document.getElementById("root"));
+
+function calculateWinner(squares) {
+  const lines = [
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+    [0, 4, 8],
+    [2, 4, 6]
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    const [a, b, c] = lines[i];
+    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+      return squares[a];
+    }
+  }
+  return null;
+}
+
+
+
