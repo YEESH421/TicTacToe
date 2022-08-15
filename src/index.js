@@ -23,7 +23,7 @@ class Board extends React.Component {
 
   render() {
     return (
-      <div>
+      <div className="">
         <div className="board-row">
           {this.renderSquare(0)}
           {this.renderSquare(1)}
@@ -46,7 +46,7 @@ class Board extends React.Component {
 
 class Game extends React.Component {
   constructor(props) {
-    super(props);
+    super();
     this.state = {
       history: [
         {
@@ -78,10 +78,10 @@ class Game extends React.Component {
     var countX = 0;
     var countO = 0;
     for (var i = 0; i<9; i++){
-      if (squares[i] == "X"){
+      if (squares[i] === "X"){
         countX += 1;
       }
-      if (squares[i] == "O"){
+      if (squares[i] === "O"){
         countO +=1;
       }
     }
@@ -89,21 +89,21 @@ class Game extends React.Component {
     var topRight = false;
     var bottomLeft = false;
     var bottomRight = false;
-    if (squares[0] == "X") {
+    if (squares[0] === "X") {
       topLeft = true;
     } 
-    if (squares[2] == "X"){
+    if (squares[2] === "X"){
       topRight = true;
     }
-    if (squares[6] == "X"){
+    if (squares[6] === "X"){
       bottomLeft = true;
     }
-    if (squares[8] == "X"){
+    if (squares[8] === "X"){
       bottomRight = true;
     }
-    if (topLeft && bottomRight && countX == 2){
+    if (topLeft && bottomRight && countX === 2){
       result[1] = "O";
-    }else if (topRight && bottomLeft && countX == 2){
+    }else if (topRight && bottomLeft && countX === 2){
       result[1] = "O";
     }else{
       result = pMvs[index];
@@ -115,11 +115,11 @@ class Game extends React.Component {
    * @param {*} state gamestate to be rated
    */
   rateState(state, xturn) {
-    if (calculateWinner(state) == 'O') { //win awards points
+    if (calculateWinner(state) === 'O') { //win awards points
       return 10;
-    } else if (calculateWinner(state) == 'X') { //lose awards negative points
+    } else if (calculateWinner(state) === 'X') { //lose awards negative points
       return -100;
-    } else if (calculateWinner(state) == null && !this.gridFull(state)) { //if nobody wins, create new array of possible states following current state
+    } else if (calculateWinner(state) === null && !this.gridFull(state)) { //if nobody wins, create new array of possible states following current state
       let nextMoves = this.possibleMoves(state, xturn);
       let rating = 0
       for (var i = 0; i < nextMoves.length; i++) {
@@ -134,7 +134,7 @@ class Game extends React.Component {
   gridFull(state) {
     let full = true;
     for (var i = 0; i < 9; i++) {
-      if (state[i] == "" || state[i] == null) {
+      if (state[i] === "" || state[i] === null) {
         full = false;
       }
     }
@@ -143,7 +143,7 @@ class Game extends React.Component {
   possibleMoves(squares, xturn) {
     let states = new Array();
     for (var i = 0; i < 9; i++) { //iterating thru all possible grid positions
-      if (squares[i] == "" || squares[i] == null) { //create possible grid of newstate where possible
+      if (squares[i] === "" || squares[i] === null) { //create possible grid of newstate where possible
         let temp = squares.slice();
         if (xturn) {
           temp[i] = 'X';
@@ -181,17 +181,19 @@ class Game extends React.Component {
       const history = this.state.history.slice(0, this.state.stepNumber + 1);
       const current = history[history.length - 1];
       var squares = current.squares.slice();
-      squares = this.cpuMove(squares);
-      this.setState(
-        {
-          history: history.concat([
-            {
-              squares: squares
-            }
-          ]),
-          stepNumber: history.length,
-          xIsNext: !this.state.xIsNext,
-        })
+      if (!this.gridFull(squares)){
+        squares = this.cpuMove(squares);
+        this.setState(
+          {
+            history: history.concat([
+              {
+                squares: squares
+              }
+            ]),
+            stepNumber: history.length,
+            xIsNext: !this.state.xIsNext,
+          })
+      }
     })
   }
 
@@ -205,8 +207,8 @@ class Game extends React.Component {
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
-    console.log(current.squares)
     const winner = calculateWinner(current.squares);
+    let gameOver;
 
     const moves = history.map((step, move) => {
       const desc = move ?
@@ -220,30 +222,45 @@ class Game extends React.Component {
     });
 
     let status;
-    if (winner) {
+    if (!winner && this.gridFull(current.squares)){
+      status = "Tie Game";
+      gameOver = true;
+    } else if (winner) {
       status = "Winner: " + winner;
+      gameOver = true;
     } else {
       status = "Next player: " + (this.state.xIsNext ? "X" : "O");
+      gameOver = false;
     }
 
     return (
-      <div className="game">
-        <div className="game-board">
-          <Board
-            squares={current.squares}
-            onClick={i => this.handleClick(i)}
-          />
-        </div>
-        <div className="game-info">
-          <div>{status}</div>
-          <ol>{moves}</ol>
+      <div>        
+        <h1>Play Tic Tac Toe vs a computer</h1>
+        <h3>Think you can beat a computer in tic tac toe? Give it a try! You go first as X, and you can even rewind to pervious moves. Good Luck!</h3>
+        <div className="game">
+          <div className="game-board">
+            <Board
+              squares={current.squares}
+              onClick={i => this.handleClick(i)}
+            />
+          </div>
+          <div className="game-info">
+            <div>{status}</div>
+            <button hidden={!gameOver} onClick={
+              () => {
+                this.jumpTo(0);
+                this.state.history = [{squares: Array(9).fill(null)}]
+              }
+            }>Reset</button>
+            <ol hidden={gameOver}>{moves}</ol>
+          </div>
         </div>
       </div>
     );
   }
 }
 
-// ========================================
+// ============================================================
 
 ReactDOM.render(<Game />, document.getElementById("root"));
 
